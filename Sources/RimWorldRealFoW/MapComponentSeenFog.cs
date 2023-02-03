@@ -11,7 +11,7 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-using HarmonyLib;
+
 using RimWorld;
 using RimWorldRealFoW.SectionLayers;
 using RimWorldRealFoW.ShadowCasters;
@@ -20,13 +20,15 @@ using RimWorldRealFoW.ThingComps.ThingSubComps;
 using RimWorldRealFoW.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Multiplayer.API;
 using UnityEngine;
 using Verse;
 
 namespace RimWorldRealFoW {
 	public class MapComponentSeenFog : MapComponent {
-		public short[][] factionsShownCells = null;
-		public bool[] knownCells = null;
+		private short[][] factionsShownCells = null; // MP: per faction
+		private Dictionary<int, bool[]> knownCells = null; // MP: per player faction
 
 		public int[] playerVisibilityChangeTick = null;
 
@@ -47,7 +49,6 @@ namespace RimWorldRealFoW {
 		public int mapSizeX;
 		public int mapSizeZ;
 		private FogGrid fogGrid;
-		private MapDrawer mapDrawer;
 
 		private ThingGrid thingGrid;
 
@@ -68,7 +69,6 @@ namespace RimWorldRealFoW {
 
 			fogGrid = map.fogGrid;
 			thingGrid = map.thingGrid;
-			mapDrawer = map.mapDrawer;
 
 			fowWatchers = new List<CompFieldOfViewWatcher>(1000);
 
@@ -78,7 +78,7 @@ namespace RimWorldRealFoW {
 			}
 			factionsShownCells = new short[maxFactionLoadId + 1][];
 
-			knownCells = new bool[mapCellLength];
+			knownCells = new();
 			viewBlockerCells = new bool[mapCellLength];
 			playerVisibilityChangeTick = new int[mapCellLength];
 
@@ -137,8 +137,40 @@ namespace RimWorldRealFoW {
 			return isShown(faction, cell.x, cell.z);
 		}
 		
+		public bool isShown(Faction faction, int idx) {
+			return getFactionShownCells(faction)[idx] != 0;
+		}
+		
 		public bool isShown(Faction faction, int x, int z) {
 			return getFactionShownCells(faction)[(z * mapSizeX) + x] != 0;
+		}
+		
+		public bool[] getFactionKnownCells(Faction faction) {
+			if (faction == null) {
+				return null;
+			}
+
+			if (knownCells.TryGetValue(faction.loadID, out bool[] arr))
+				return arr;
+
+			arr = knownCells[faction.loadID] = new bool[mapCellLength];
+			return arr;
+		}
+
+		public ref bool isKnown(Faction faction, IntVec3 cell) {
+			return ref isKnown(faction, cell.x, cell.z);
+		}
+		
+		public ref bool isKnown(Faction faction, int x, int z) {
+			return ref getFactionKnownCells(faction)[(z * mapSizeX) + x];
+		}
+		
+		public ref bool isKnown(Faction faction, int idx) {
+			return ref getFactionKnownCells(faction)[idx];
+		}
+		
+		public ref bool isKnownToRealPlayerFaction(int idx) {
+			return ref getFactionKnownCells(MpWrapper.RealPlayerFaction)[idx];
 		}
 
 		public void registerCompHideFromPlayerPosition(CompHideFromPlayer comp, int x, int z) {
@@ -180,7 +212,7 @@ namespace RimWorldRealFoW {
 		
 		private void init() {
 			// Retrieve map sections and store in a linear array.
-			Section[,] mapDrawerSections = (Section[,])Traverse.Create(mapDrawer).Field("sections").GetValue();
+			Section[,] mapDrawerSections = map.mapDrawer.sections;
 			sectionsSizeX = mapDrawerSections.GetLength(0);
 			sectionsSizeY = mapDrawerSections.GetLength(1);
 
@@ -192,7 +224,7 @@ namespace RimWorldRealFoW {
 			}
 
 			// Initialize mining designators (add notifications intercepted by detours aren't fired on load).
-			List<Designation> designations = map.designationManager.allDesignations;
+			List<Designation> designations = map.designationManager.AllDesignations;
 			for (int i = 0; i < designations.Count; i++) {
 				Designation des = designations[i];
 				if (des.def == DesignationDefOf.Mine && !des.target.HasThing) {
@@ -201,17 +233,21 @@ namespace RimWorldRealFoW {
 			}
 
 			// Reveal the starting position if home map and no pawns (landing).
-			if (map.IsPlayerHome && map.mapPawns.ColonistsSpawnedCount == 0) {
+			// MP: Disabled for now
+			if (map.IsPlayerHome && map.mapPawns.ColonistsSpawnedCount == 0 && false)
+			{
+				var playerKnown = getFactionKnownCells(Faction.OfPlayer);
+				
 				IntVec3 playerStartSpot = MapGenerator.PlayerStartSpot;
 				int baseViewRange = Mathf.RoundToInt(DefDatabase<RealFoWModDefaultsDef>.GetNamed(RealFoWModDefaultsDef.DEFAULT_DEF_NAME).baseViewRange);
 				ShadowCaster.computeFieldOfViewWithShadowCasting(playerStartSpot.x, playerStartSpot.z, baseViewRange,
 					viewBlockerCells, map.Size.x, map.Size.z, 
 					false, null, null, null, // Directly updating known cells. No need to call incrementSeen.
-					knownCells, 0, 0, mapSizeX, 
+					playerKnown, 0, 0, mapSizeX, 
 					null, 0, 0, 0, 0, 0);
 
 				for (int i = 0; i < mapCellLength; i++) {
-					if (knownCells[i]) {
+					if (playerKnown[i]) {
 						IntVec3 cell = CellIndicesUtility.IndexToCell(i, mapSizeX);
 						foreach (Thing t in map.thingGrid.ThingsListAtFast(cell)) {
 							CompMainComponent compMain = (CompMainComponent) t.TryGetComp(CompMainComponent.COMP_DEF);
@@ -223,7 +259,7 @@ namespace RimWorldRealFoW {
 				}
 			}
 
-			// Update all thing FoV and visibility.
+			// Update all thing FoV
 			foreach (Thing thing in map.listerThings.AllThings) {
 				if (thing.Spawned) {
 					CompMainComponent compMain = (CompMainComponent) thing.TryGetComp(CompMainComponent.COMP_DEF);
@@ -234,28 +270,55 @@ namespace RimWorldRealFoW {
 						if (compMain.compFieldOfViewWatcher != null) {
 							compMain.compFieldOfViewWatcher.updateFoV();
 						}
-						if (compMain.compHideFromPlayer != null) {
-							compMain.compHideFromPlayer.updateVisibility(true);
-						}
 					}
 				}
 			}
 
 			// Redraw everything.
-			mapDrawer.RegenerateEverythingNow();
+			// MP: push/pop is desync fix, consider a better solution
+			Rand.PushState();
+			map.mapDrawer.RegenerateEverythingNow();
+			Rand.PopState();
+		}
+
+		// Called from RegenerateEverythingNow prefix patch
+		public void UpdateThingVisibility() {
+			foreach (Thing thing in map.listerThings.AllThings) {
+				if (thing.Spawned) {
+					CompMainComponent compMain = (CompMainComponent) thing.TryGetComp(CompMainComponent.COMP_DEF);
+					compMain?.compHideFromPlayer?.updateVisibility(true);
+				}
+			}
 		}
 
 		public override void ExposeData() {
 			base.ExposeData();
 
-			DataExposeUtility.BoolArray(ref knownCells, map.Size.x * map.Size.z, "revealedCells");
+			if (Scribe.mode == LoadSaveMode.Saving)
+			{
+				var savingDict = knownCells.ToDictionary(kv => kv.Key, kv => new BoolArrayExposer()
+				{
+					size = mapCellLength,
+					array = kv.Value
+				});
+				
+				Scribe_Collections.Look(ref savingDict, "revealedCellsPerFaction");
+			}
+			else if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				var dict = new Dictionary<int, BoolArrayExposer>();
+				Scribe_Collections.Look(ref dict, "revealedCellsPerFaction");
+
+				knownCells = (dict ?? new Dictionary<int, BoolArrayExposer>()).
+					ToDictionary(kv => kv.Key, kv => kv.Value.array);
+			}
 		}
 
-		public void revealCell(int idx) {
-			if (!knownCells[idx]) {
+		public void revealCell(Faction faction, int idx) {
+			if (!isKnown(faction, idx)) {
 				ref IntVec3 cell = ref idxToCellCache[idx];
 
-				knownCells[idx] = true;
+				isKnown(faction, idx) = true;
 				
 				Designation designation = mineDesignationGrid[idx];
 				if (designation != null && cell.GetFirstMineable(map) == null) {
@@ -280,13 +343,36 @@ namespace RimWorldRealFoW {
 				}
 			}
 		}
+		
+		public void unrevealCell(Faction faction, int idx) {
+			if (isKnown(faction, idx) && !isShown(faction, idx)) {
+				isKnown(faction, idx) = false;
+				
+				if (initialized) {
+					setMapMeshDirtyFlag(idx);
+
+					// Refresh overlays
+					map.fertilityGrid.Drawer.SetDirty();
+					map.roofGrid.Drawer.SetDirty();
+					map.terrainGrid.Drawer.SetDirty();
+				}
+
+				if (compHideFromPlayerGridCount[idx] != 0) {
+					List<CompHideFromPlayer> comps = compHideFromPlayerGrid[idx];
+					int compCount = comps.Count;
+					for (int i = 0; i < compCount; i++) {
+						comps[i].updateVisibility(true);
+					}
+				}
+			}
+		}
 
 		public void incrementSeen(Faction faction, short[] factionShownCells, int idx) {
 			if ((++factionShownCells[idx] == 1) && faction.def.isPlayer) {
 				ref IntVec3 cell = ref idxToCellCache[idx];
 
-				if (!knownCells[idx]) {
-					knownCells[idx] = true;
+				if (!isKnown(faction, idx)) {
+					isKnown(faction, idx) = true;
 
 					// Refresh overlays
 					if (initialized) {

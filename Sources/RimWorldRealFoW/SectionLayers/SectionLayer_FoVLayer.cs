@@ -26,7 +26,6 @@ namespace RimWorldRealFoW.SectionLayers {
 		public static byte prefFogAlpha = 86;
 
 		private MapComponentSeenFog pawnFog;
-		private short[] factionShownGrid = null;
 
 		public static MapMeshFlag mapMeshFlag = MapMeshFlag.None;
 
@@ -57,6 +56,8 @@ namespace RimWorldRealFoW.SectionLayers {
 		
 		private bool[] vertsNotShown = new bool[9];
 		private bool[] vertsSeen = new bool[9];
+
+		private int forFactionId = -1;
 
 		private byte[] targetAlphas = new byte[0];
 		private int[] alphaChangeTick = new int[0];
@@ -145,16 +146,19 @@ namespace RimWorldRealFoW.SectionLayers {
 					firstGeneration = false;
 				}
 
+				if (forFactionId != Faction.OfPlayer.loadID)
+				{
+					firstGeneration = true;
+					forFactionId = Faction.OfPlayer.loadID;
+				}
+
 				int colorIdx = 0;
 
 				bool[] fogGrid = base.Map.fogGrid.fogGrid;
-				if (this.factionShownGrid == null) {
-					this.factionShownGrid = pawnFog.getFactionShownCells(Faction.OfPlayer);
-				}
-				short[] factionShownGrid = this.factionShownGrid;
+				short[] factionShownGrid = pawnFog.getFactionShownCells(Faction.OfPlayer);
 
 				int[] playerShownCellsTick = pawnFog.playerVisibilityChangeTick;
-				bool[] knownGrid = pawnFog.knownCells;
+				bool[] knownGrid = pawnFog.getFactionKnownCells(Faction.OfPlayer);
 
 				int mapSizeX = base.Map.Size.x;
 
@@ -358,7 +362,7 @@ namespace RimWorldRealFoW.SectionLayers {
 		}
 
 		public override void DrawLayer() {
-			if (prefEnableFade && this.Visible && activeFogTransitions) {
+			if (prefEnableFade && Visible && activeFogTransitions) {
 				int fogTransitionTick = Find.TickManager.TicksGame;
 				int gameSpeed = Math.Max((int) Find.TickManager.CurTimeSpeed, 1);
 

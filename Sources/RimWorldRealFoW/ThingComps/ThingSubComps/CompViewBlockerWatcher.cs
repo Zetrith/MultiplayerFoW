@@ -83,7 +83,7 @@ namespace RimWorldRealFoW.ThingComps.ThingSubComps {
 			for (int x = occupiedRect.minX; x <= occupiedRect.maxX; x++) {
 				for (int z = occupiedRect.minZ; z <= occupiedRect.maxZ; z++) {
 					if (x >= 0 && z >= 0 && x <= mapSizeX && z <= mapSizeZ) {
-						viewBlockerCells[(z * mapSizeZ) + x] = blockView;
+						viewBlockerCells[(z * mapSizeX) + x] = blockView;
 					}
 				}
 			}

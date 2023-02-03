@@ -25,10 +25,14 @@ namespace RimWorldRealFoW.Utils {
 				if (_this.def.isSaveable && !_this.def.saveCompressible) {
 					CompHiddenable comp = _this.TryGetCompHiddenable();
 					if (comp != null) {
+						// MP: saveable, noncompressible with comp returns based on the comp
 						return !comp.hidden;
 					}
 				}
-				return forRender || (_this.Map != null && _this.fowInKnownCell());
+				// MP: nonsaveable, compressible or no comp (rocks) is always visible for render or else if in known cell
+				// MP: disabled for now
+				// return forRender || (_this.Map != null && _this.fowInKnownCell());
+				return true;
 			}
 			return true;
 		}
@@ -40,24 +44,25 @@ namespace RimWorldRealFoW.Utils {
 #endif
 			MapComponentSeenFog mapComponent = _this.Map.getMapComponentSeenFog();
 			if (mapComponent != null) {
-				bool[] knownCells = mapComponent.knownCells;
-				int mapSizeX = mapComponent.mapSizeX;
-				IntVec3 position = _this.Position;
-
-				IntVec2 size = _this.def.size;
-				if (size.x == 1 && size.z == 1) {
-					return mapComponent.knownCells[(position.z * mapSizeX) + position.x];
-				} else {
-					CellRect occupiedRect = GenAdj.OccupiedRect(position, _this.Rotation, size);
-
-					for (int x = occupiedRect.minX; x <= occupiedRect.maxX; x++) {
-						for (int z = occupiedRect.minZ; z <= occupiedRect.maxZ; z++) {
-							if (mapComponent.knownCells[(z * mapSizeX) + x]) {
-								return true;
-							}
-						}
-					}
-				}
+				// MP: disabled for now
+				// bool[] knownCells = mapComponent.knownCells;
+				// int mapSizeX = mapComponent.mapSizeX;
+				// IntVec3 position = _this.Position;
+				//
+				// IntVec2 size = _this.def.size;
+				// if (size.x == 1 && size.z == 1) {
+				// 	return mapComponent.knownCells[(position.z * mapSizeX) + position.x];
+				// } else {
+				// 	CellRect occupiedRect = GenAdj.OccupiedRect(position, _this.Rotation, size);
+				//
+				// 	for (int x = occupiedRect.minX; x <= occupiedRect.maxX; x++) {
+				// 		for (int z = occupiedRect.minZ; z <= occupiedRect.maxZ; z++) {
+				// 			if (mapComponent.knownCells[(z * mapSizeX) + x]) {
+				// 				return true;
+				// 			}
+				// 		}
+				// 	}
+				// }
 
 				return false;
 			}

@@ -32,7 +32,7 @@ namespace RimWorldRealFoW.Detours {
 			}
 
 			MapComponentSeenFog seenFog = Find.CurrentMap.getMapComponentSeenFog();
-			if (!c.Fogged(Find.CurrentMap) && (seenFog != null && !seenFog.knownCells[Find.CurrentMap.cellIndices.CellToIndex(c)])) {
+			if (!c.Fogged(Find.CurrentMap) && (seenFog != null && !seenFog.isKnownToRealPlayerFaction(Find.CurrentMap.cellIndices.CellToIndex(c)))) {
 				GenUI.DrawTextWinterShadow(new Rect(256f, (float)(UI.screenHeight - 256), -256f, 256f));
 				Text.Font = GameFont.Small;
 				GUI.color = new Color(1f, 1f, 1f, 0.8f);

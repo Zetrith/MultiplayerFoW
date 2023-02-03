@@ -281,12 +281,12 @@ namespace RimWorldRealFoW.ThingComps.ThingSubComps {
 
 						int sightRange = Mathf.RoundToInt(turret.GunCompEq.PrimaryVerb.verbProps.range);
 
-						if (Find.Storyteller.difficulty.difficulty >= 4 || // Intense and Extreme difficulties disable FoV from turrets.
-									(compPowerTrader != null && !compPowerTrader.PowerOn) ||
-								  (compRefuelable != null && !compRefuelable.HasFuel) ||
-								  (compFlickable != null && !compFlickable.SwitchIsOn)) {
-							sightRange = 0;
-						}
+						// if (Find.Storyteller.difficulty.difficulty >= 4 || // Intense and Extreme difficulties disable FoV from turrets.
+						// 			(compPowerTrader != null && !compPowerTrader.PowerOn) ||
+						// 		  (compRefuelable != null && !compRefuelable.HasFuel) ||
+						// 		  (compFlickable != null && !compFlickable.SwitchIsOn)) {
+						// 	sightRange = 0;
+						// }
 
 						if (!calculated || forceUpdate || newFaction != lastFaction || newPosition != lastPosition || sightRange != lastSightRange) {
 							calculated = true;
@@ -901,15 +901,13 @@ namespace RimWorldRealFoW.ThingComps.ThingSubComps {
 		}
 
 		private void revealOccupiedCells() {
-			if (parent.Faction == Faction.OfPlayer) {
-				CellRect occupedRect = parent.OccupiedRect();
+			CellRect occupedRect = parent.OccupiedRect();
 
-				int occupiedX;
-				int occupiedZ;
-				for (occupiedX = occupedRect.minX; occupiedX <= occupedRect.maxX; occupiedX++) {
-					for (occupiedZ = occupedRect.minZ; occupiedZ <= occupedRect.maxZ; occupiedZ++) {
-						mapCompSeenFog.revealCell((occupiedZ * mapSizeX) + occupiedX);
-					}
+			int occupiedX;
+			int occupiedZ;
+			for (occupiedX = occupedRect.minX; occupiedX <= occupedRect.maxX; occupiedX++) {
+				for (occupiedZ = occupedRect.minZ; occupiedZ <= occupedRect.maxZ; occupiedZ++) {
+					mapCompSeenFog.revealCell(parent.Faction, (occupiedZ * mapSizeX) + occupiedX);
 				}
 			}
 		}

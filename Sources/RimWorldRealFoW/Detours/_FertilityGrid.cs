@@ -8,10 +8,10 @@ namespace RimWorldRealFoW.Detours {
 
 		public static void CellBoolDrawerGetBoolInt_Postfix(int index, ref FertilityGrid __instance, ref bool __result) {
 			if (__result) {
-				Map map = Traverse.Create(__instance).Field("map").GetValue<Map>();
+				Map map = __instance.map;
 				MapComponentSeenFog mapCmq = map.getMapComponentSeenFog();
 				if (mapCmq != null) {
-					__result = mapCmq.knownCells[index];
+					__result = mapCmq.isKnownToRealPlayerFaction(index);
 				}
 			}
 		}

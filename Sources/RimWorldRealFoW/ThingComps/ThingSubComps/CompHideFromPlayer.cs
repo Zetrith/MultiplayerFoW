@@ -11,6 +11,8 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
+
+using Multiplayer.API;
 using RimWorld;
 using RimWorldRealFoW.Utils;
 using Verse;
@@ -118,24 +120,26 @@ namespace RimWorldRealFoW.ThingComps.ThingSubComps {
 					lastPosition = newPosition;
 					lastRotation = newRotation;
 
-					bool belongToPlayer = thing.Faction != null && thing.Faction.IsPlayer;
+					bool belongToPlayer = thing.Faction != null && thing.Faction == MpWrapper.RealPlayerFaction;
 
 					if (mapCompSeenFog != null && !fogGrid.IsFogged(lastPosition)) {
 						if (isSaveable && !saveCompressible) {
 							if (!belongToPlayer) {
-								if (isPawn && !hasPartShownToPlayer()) {
+								if (isPawn && !hasPartShownToPlayer()) { // hidden pawn
 									compHiddenable.hide();
-								} else if (!isPawn && !seenByPlayer && !hasPartShownToPlayer()) {
+								} else if (!isPawn && !seenByPlayer && !hasPartShownToPlayer()) { // non-pawn, not seen before no part shown
 									compHiddenable.hide();
 								} else {
 									seenByPlayer = true;
 									compHiddenable.show();
 								}
 							} else {
+								// Always show non-vanilla-fogged player's saveables
 								seenByPlayer = true;
 								compHiddenable.show();
 							}
 						} else if ((forceUpdate || !seenByPlayer) && hasPartShownToPlayer()) {
+							// Always show rocks etc. if part shown
 							seenByPlayer = true;
 							compHiddenable.show();
 						}
@@ -148,7 +152,7 @@ namespace RimWorldRealFoW.ThingComps.ThingSubComps {
 		}
 
 		private bool hasPartShownToPlayer() {
-			Faction playerFaction = Faction.OfPlayer;
+			Faction playerFaction = MpWrapper.RealPlayerFaction;
 			if (isOneCell) {
 				return mapCompSeenFog.isShown(playerFaction, lastPosition.x, lastPosition.z);
 

@@ -13,7 +13,7 @@ namespace RimWorldRealFoW.Detours {
 				MapComponentSeenFog seenFog = map.getMapComponentSeenFog();
 				if (seenFog != null) {
 					foreach (IntVec3 cell in cellRect) {
-						if (!seenFog.knownCells[map.cellIndices.CellToIndex(cell)]) {
+						if (!seenFog.isKnownToRealPlayerFaction(map.cellIndices.CellToIndex(cell))) {
 							__result = "CannotPlaceInUndiscovered".Translate();
 							return;
 						}

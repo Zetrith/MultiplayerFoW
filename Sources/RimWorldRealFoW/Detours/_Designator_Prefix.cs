@@ -10,7 +10,7 @@ namespace RimWorldRealFoW.Detours {
 			Map map = Traverse.Create(__instance).Property("Map").GetValue<Map>();
 
 			MapComponentSeenFog mapCmq = map.getMapComponentSeenFog();
-			if (mapCmq != null && c.InBounds(map) && !mapCmq.knownCells[map.cellIndices.CellToIndex(c)]) {
+			if (mapCmq != null && c.InBounds(map) && !mapCmq.isKnownToRealPlayerFaction(map.cellIndices.CellToIndex(c))) {
 				__result = false;
 				return false;
 			}

@@ -40,13 +40,16 @@ namespace RimWorldRealFoW {
 #endif
 
 		static Harmony harmony;
-		static RealFoWModStarter() {
+
+		static RealFoWModStarter()
+		{
 
 #if Profile
 			mono_profiler_load(@"default:time,file=d:/rimworld-prof.mprf");
 #endif
 
 			harmony = new Harmony("com.github.lukakama.rimworldmodrealfow");
+			harmony.PatchAll();
 			injectDetours();
 			harmony = null;
 		}
@@ -96,6 +99,7 @@ namespace RimWorldRealFoW {
 			patchMethod(typeof(MainTabWindow_Wildlife), typeof(_MainTabWindow_Wildlife), "get_Pawns");
 
 			patchMethod(typeof(Pawn), typeof(_Pawn), "DrawGUIOverlay");
+			patchMethod(typeof(OverlayDrawer), typeof(_OverlayDrawer), "DrawOverlay");
 			
 			patchMethod(typeof(GenMapUI), typeof(_GenMapUI), "DrawThingLabel", typeof(Thing), typeof(string), typeof(Color));
 			patchMethod(typeof(SectionLayer_ThingsGeneral), typeof(_SectionLayer_ThingsGeneral), "TakePrintFrom");
@@ -110,7 +114,7 @@ namespace RimWorldRealFoW {
 			patchMethod(typeof(LetterStack), typeof(_LetterStack), "ReceiveLetter", typeof(TaggedString), typeof(TaggedString), typeof(LetterDef), typeof(LookTargets), typeof(Faction), typeof(Quest), typeof(List<ThingDef>), typeof(string));
 
 			patchMethod(typeof(MoteBubble), typeof(_MoteBubble), "Draw", new Type[] {});
-			patchMethod(typeof(GenView), typeof(_GenView), "ShouldSpawnMotesAt", new Type[]{typeof(IntVec3), typeof(Map)});
+			patchMethod(typeof(GenView), typeof(_GenView), "ShouldSpawnMotesAt", new Type[]{typeof(IntVec3), typeof(Map), typeof(bool)});
 
 			patchMethod(typeof(FertilityGrid), typeof(_FertilityGrid), "CellBoolDrawerGetBoolInt");
 			patchMethod(typeof(TerrainGrid), typeof(_TerrainGrid), "CellBoolDrawerGetBoolInt");

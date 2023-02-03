@@ -9,7 +9,7 @@ namespace RimWorldRealFoW.Detours {
 				Map map = Find.CurrentMap;
 				MapComponentSeenFog mapCmq = map.getMapComponentSeenFog();
 
-				__result = (mapCmq == null || mapCmq.knownCells[map.cellIndices.CellToIndex(UI.MouseCell())]);
+				__result = (mapCmq == null || mapCmq.isKnownToRealPlayerFaction(map.cellIndices.CellToIndex(UI.MouseCell())));
 			}
 		}
 	}
