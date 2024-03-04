@@ -1,7 +1,7 @@
 ﻿## Real Fog of War for RimWorld
 Fog of war, updated to 1.4 and made compatible with the Multiplayer mod
 
-**Download in the Releases** on the left 
+**Download in the Releases** on the left. Currently not on Steam
 
 Multiplayer isn't required for it to work.
 
@@ -20,3 +20,5 @@ At the moment, there are some known issues with:
 
 ### Acknowledgements
 **lukakama** for the original FoW mod: https://github.com/lukakama/rimworld-mod-real-fow
+
+Original workshop page: https://steamcommunity.com/sharedfiles/filedetails/?id=836245605
