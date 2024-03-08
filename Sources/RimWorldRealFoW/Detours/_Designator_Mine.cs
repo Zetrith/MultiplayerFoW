@@ -11,7 +11,7 @@ namespace RimWorldRealFoW.Detours {
 
 				if (map.designationManager.DesignationAt(c, DesignationDefOf.Mine) == null) {
 					MapComponentSeenFog mapCmq = map.getMapComponentSeenFog();
-					if (mapCmq != null && c.InBounds(map) && !mapCmq.isKnownToRealPlayerFaction(map.cellIndices.CellToIndex(c))) {
+					if (mapCmq != null && c.InBounds(map) && !mapCmq.isKnown(Faction.OfPlayer, map.cellIndices.CellToIndex(c))) {
 						__result = true;
 					}
 				}

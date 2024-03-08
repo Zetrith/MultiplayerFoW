@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using RimWorld;
 using RimWorldRealFoW.ThingComps.ThingSubComps;
 using RimWorldRealFoW.Utils;
 using Verse;
@@ -10,7 +11,7 @@ namespace RimWorldRealFoW.Detours {
 			Map map = Traverse.Create(__instance).Property("Map").GetValue<Map>();
 
 			MapComponentSeenFog mapCmq = map.getMapComponentSeenFog();
-			if (mapCmq != null && c.InBounds(map) && !mapCmq.isKnownToRealPlayerFaction(map.cellIndices.CellToIndex(c))) {
+			if (mapCmq != null && c.InBounds(map) && !mapCmq.isKnown(Faction.OfPlayer, map.cellIndices.CellToIndex(c))) {
 				__result = false;
 				return false;
 			}

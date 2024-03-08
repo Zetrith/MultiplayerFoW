@@ -11,7 +11,7 @@ namespace RimWorldRealFoW.Detours {
 			if (mapCmq != null)
 			{
 				BeautyUtility.beautyRelevantCells.RemoveAll(c =>
-					!mapCmq.isKnownToRealPlayerFaction(map.cellIndices.CellToIndex(c)));
+					!mapCmq.isKnown(Faction.OfPlayer, map.cellIndices.CellToIndex(c)));
 			}
 		}
 	}

@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using RimWorld;
 using RimWorldRealFoW.Utils;
 using Verse;
 
@@ -13,7 +14,7 @@ namespace RimWorldRealFoW.Detours {
 				MapComponentSeenFog seenFog = map.getMapComponentSeenFog();
 				if (seenFog != null) {
 					foreach (IntVec3 cell in cellRect) {
-						if (!seenFog.isKnownToRealPlayerFaction(map.cellIndices.CellToIndex(cell))) {
+						if (!seenFog.isKnown(Faction.OfPlayer, map.cellIndices.CellToIndex(cell))) {
 							__result = "CannotPlaceInUndiscovered".Translate();
 							return;
 						}
