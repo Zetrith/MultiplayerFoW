@@ -51,7 +51,7 @@ namespace RimWorldRealFoW.ThingComps.ThingSubComps {
 					mapCompSeenFog = map.getMapComponentSeenFog();
 				}
 
-				updateViewBlockerCells(false);
+				updateViewBlockerCells(parent, map, false);
 			}
 		}
 
@@ -66,20 +66,21 @@ namespace RimWorldRealFoW.ThingComps.ThingSubComps {
 					mapCompSeenFog = map.getMapComponentSeenFog();
 				}
 
-				updateViewBlockerCells(isViewBlocker);
+				updateViewBlockerCells(parent, map, isViewBlocker);
 			}
 		}
 
-		private void updateViewBlockerCells(bool blockView) {
+		public static void updateViewBlockerCells(Thing thing, Map map, bool blockView) {
 #if InternalProfile
 			ProfilingUtils.startProfiling("CompViewBlockerWatcher.updateViewBlockerCells");
 #endif
+			var mapCompSeenFog = map.getMapComponentSeenFog();
 			bool[] viewBlockerCells = mapCompSeenFog.viewBlockerCells;
 
 			int mapSizeZ = map.Size.z;
 			int mapSizeX = map.Size.x;
 
-			CellRect occupiedRect = parent.OccupiedRect();
+			CellRect occupiedRect = thing.OccupiedRect();
 			for (int x = occupiedRect.minX; x <= occupiedRect.maxX; x++) {
 				for (int z = occupiedRect.minZ; z <= occupiedRect.maxZ; z++) {
 					if (x >= 0 && z >= 0 && x <= mapSizeX && z <= mapSizeZ) {
@@ -88,7 +89,7 @@ namespace RimWorldRealFoW.ThingComps.ThingSubComps {
 				}
 			}
 
-			IntVec3 thisPos = parent.Position;
+			IntVec3 thisPos = thing.Position;
 			if (Current.ProgramState == ProgramState.Playing) {
 				if (map != null) {
 					List<CompFieldOfViewWatcher> cmpFovs = mapCompSeenFog.fowWatchers;
